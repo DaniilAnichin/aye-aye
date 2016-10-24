@@ -1,0 +1,1 @@
+# QtGui.QColorDialog.getColor()
