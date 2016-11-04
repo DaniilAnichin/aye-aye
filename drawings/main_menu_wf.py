@@ -3,6 +3,7 @@
 import sys
 from PyQt4 import QtCore, QtGui
 from elements.ControlsForm import ControlsForm
+from elements.Scene import Scene
 from translate import fromUtf8
 
 
@@ -16,15 +17,14 @@ class MainWindow(QtGui.QMainWindow):
         self.center = QtGui.QWidget()
 
         self.hbox = QtGui.QHBoxLayout(self.center)
-        self.graphicsView = QtGui.QGraphicsView(self)
-        self.hbox.addWidget(self.graphicsView)
-        self.controls_form = ControlsForm(self)
+        self.scene = Scene()
+        self.hbox.addWidget(self.scene)
+        self.controls_form = ControlsForm()
         self.hbox.addLayout(self.controls_form)
 
         self.setCentralWidget(self.center)
 
         self.menubar = QtGui.QMenuBar(self)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 824, 19))
         self.setMenuBar(self.menubar)
 
         self.statusbar = QtGui.QStatusBar(self)
