@@ -1,39 +1,34 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*- #
 from PyQt4 import QtGui, QtCore
-from elements.Bot import Bot, Figure
+from elements.Bot import Bot
+from elements.tools import Logger
+logger = Logger()
 
 
-class Scene(QtGui.QWidget):
+stylesheet = '''
+    background-color: %s;
+    border: 1px solid #8f8f91;
+'''
+
+
+class Scene(QtGui.QFrame):
     def __init__(self, *args, **kwargs):
         super(Scene, self).__init__(*args)
-        self.bot = Bot(self, **kwargs)
         self.setSizePolicy(QtGui.QSizePolicy(*[QtGui.QSizePolicy.Expanding] * 2))
-        self.setWindowTitle('Draw circles')
+        self.update_color(**kwargs)
+        self.draw_rulers()
 
-    def paintEvent(self, event):
-        for child in self.children():
-            if isinstance(child, Figure):
-                self.draw_figure(child)
+    def update_color(self, **kwargs):
+        self.color = kwargs.get('color')
+        self.setStyleSheet(stylesheet % self.color.name())
 
-        paint = QtGui.QPainter()
-        paint.begin(self)
-        # optional
-        paint.setRenderHint(QtGui.QPainter.Antialiasing)
-        # make a white drawing background
-        paint.setBrush(QtGui.QColor('white'))
-        paint.drawRect(event.rect())
-        # for circle make the ellipse radii match
-        radx = 100
-        rady = 100
-        # draw red circles
-        paint.setPen(QtGui.QColor('red'))
-        paint.setBrush(QtGui.QColor('yellow'))
-        for k in range(125, 220, 10):
-            center = QtCore.QPoint(k, k)
-            # optionally fill each circle yellow
-            paint.drawEllipse(center, radx, rady)
-        paint.end()
+    def create_bot(self, **kwargs):
+        self.bot = Bot(self, **kwargs)
 
-    def draw_figure(self):
+    def update_bot(self, **kwargs):
+        self.bot.update_params(**kwargs)
+
+    def draw_rulers(self):
+        # TODO draw rulers on the sides of the scene
         pass
