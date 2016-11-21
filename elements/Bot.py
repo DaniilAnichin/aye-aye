@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*- #
-# from math import cos, sin, degrees, radians
+from math import cos, sin, degrees, radians
 from PyQt4 import QtGui, QtCore
 from elements.Figure import Figure
 from elements.tools import Logger, CountingTimer
@@ -14,9 +14,11 @@ class Bot(Figure):
 
         self.direction = 0
         self.turn_number = 0
-        self.center = QtCore.QPoint(0, 0)
+        self.center = QtCore.QPointF(0, 0)
+        self.block_center = False
         self.update_params(**kwargs)
-
+        self.move(0, 0)
+        logger.debug(self.parent().size())
         self.resize(self.parent().size())
         self.show()
 
@@ -28,22 +30,30 @@ class Bot(Figure):
         self.angle = kwargs.get('angle')
         self.time_step = kwargs.get('time_step') / 100.
         self.direction = kwargs.get('direction')
-        self.center = QtCore.QPoint(5 * kwargs.get('x'), 5 * kwargs.get('y'))
+        if not self.block_center:
+            self.center = QtCore.QPointF(5 * kwargs.get('x'), 5 * kwargs.get('y'))
+        self.block_center = True
 
-    def perform_step(self, steps_number):
-        pass
+    def perform_step(self):
+        x = self.center.x() + self.step * cos(radians(self.direction))
+        y = self.center.y() + self.step * sin(radians(self.direction))
+        self.center.setX(x)
+        self.center.setY(y)
+        self.update()
 
     def move_to(self, point):
         self.setGeometry(point.x(), point.y())
 
-    def turn(self):
+    def perform_turn(self):
         self.direction = (self.direction + self.angle) % 360
         self.turn_number += 1
         self.update()
 
-    def full_turn(self):
+    def turn(self, angle):
         logger.debug('Called')
-        self.timer = CountingTimer(360 / self.angle, self.time_step, self.turn)
+        if angle > 3600:
+            return
+        self.timer = CountingTimer(angle / self.angle, self.time_step, self.perform_turn)
         self.timer.start()
 
     # Drawing starts here
@@ -52,6 +62,11 @@ class Bot(Figure):
         paint = QtGui.QPainter()
         paint.begin(self)
         paint.setRenderHint(QtGui.QPainter.Antialiasing)
+
+        paint.setBrush(QtGui.QColor('white'))
+        logger.debug(event.rect())
+        paint.drawRect(event.rect())
+
         paint.translate(self.center)
         paint.rotate(self.direction)
 

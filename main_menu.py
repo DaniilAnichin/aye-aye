@@ -31,7 +31,10 @@ class MainWindow(QtGui.QMainWindow):
             lambda: self.scene.update_color(color=self.controls.scene_color)
         )
         self.controls.turn_button.clicked.connect(
-            self.scene.bot.full_turn
+            lambda: self.scene.bot.turn(angle=360)
+        )
+        self.controls.move_button.clicked.connect(
+            self.scene.bot.perform_step
         )
         self.hbox.addWidget(self.scene)
         self.hbox.addLayout(self.controls)
