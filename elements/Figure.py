@@ -12,11 +12,10 @@ class Figure(QtGui.QWidget):
     def __init__(self, parent=None, **kwargs):
         super(Figure, self).__init__(parent)
         self.scene = parent
-        # self.points = kwargs.get('points', [])
-        if not kwargs.get('color'):
-            kwargs.update({'color': self.default_color})
-        self.update_params(**kwargs)
-        self.show()
+        # # self.points = kwargs.get('points', [])
+        # if not kwargs.get('color'):
+        #     kwargs.update({'color': self.default_color})
+        # self.show()
 
     def update_params(self, **kwargs):
         self.color = kwargs.get('color')

@@ -16,7 +16,8 @@ class MainWindow(QtGui.QMainWindow):
         self.setupUi()
 
     def setupUi(self):
-        self.resize(800, 600)
+        # self.resize(800, 600)
+        self.setFixedSize(800, 600)
         self.setCentralWidget(QtGui.QWidget())
         self.hbox = QtGui.QHBoxLayout(self.centralWidget())
 
@@ -28,6 +29,9 @@ class MainWindow(QtGui.QMainWindow):
         )
         self.controls.edited.connect(
             lambda: self.scene.update_color(color=self.controls.scene_color)
+        )
+        self.controls.turn_button.clicked.connect(
+            self.scene.bot.full_turn
         )
         self.hbox.addWidget(self.scene)
         self.hbox.addLayout(self.controls)

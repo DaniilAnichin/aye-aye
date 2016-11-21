@@ -1,8 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*- #
+# from math import cos, sin, degrees, radians
 from PyQt4 import QtGui, QtCore
 from elements.Figure import Figure
-from elements.tools import Logger, invert
+from elements.tools import Logger, CountingTimer
 logger = Logger()
 center_rad = 5
 
@@ -10,18 +11,24 @@ center_rad = 5
 class Bot(Figure):
     def __init__(self, parent=None, **kwargs):
         super(Bot, self).__init__(parent, **kwargs)
-        self.update_params(**kwargs)
+
         self.direction = 0
+        self.turn_number = 0
+        self.center = QtCore.QPoint(0, 0)
+        self.update_params(**kwargs)
+
+        self.resize(self.parent().size())
         self.show()
 
     def update_params(self, **kwargs):
-        logger.debug('Update called')
-        self.width = 8 * kwargs.get('width')
-        self.step = 8 * kwargs.get('step')
+        # logger.debug('Update called')
+        self.radius = 5 * kwargs.get('width')
+        self.step = 5 * kwargs.get('step')
         self.color = kwargs.get('color')
         self.angle = kwargs.get('angle')
-        self.time_step = 1000 * kwargs.get('time_step')
-        self.setGeometry(100, 100, self.width, self.step)
+        self.time_step = kwargs.get('time_step') / 100.
+        self.direction = kwargs.get('direction')
+        self.center = QtCore.QPoint(5 * kwargs.get('x'), 5 * kwargs.get('y'))
 
     def perform_step(self, steps_number):
         pass
@@ -29,19 +36,44 @@ class Bot(Figure):
     def move_to(self, point):
         self.setGeometry(point.x(), point.y())
 
-    def turn(self, angles_number):
-        self.direction += int(angles_number * self.angle)
+    def turn(self):
+        self.direction = (self.direction + self.angle) % 360
+        self.turn_number += 1
+        self.update()
 
+    def full_turn(self):
+        logger.debug('Called')
+        self.timer = CountingTimer(360 / self.angle, self.time_step, self.turn)
+        self.timer.start()
+
+    # Drawing starts here
     def paintEvent(self, event):
-        logger.debug('Bot is drawing')
+        # logger.debug('Bot is drawing')
         paint = QtGui.QPainter()
         paint.begin(self)
-        paint.rotate(45)
         paint.setRenderHint(QtGui.QPainter.Antialiasing)
-        # make a white drawing background
-        paint.setBrush(self.color)
-        paint.drawRect(event.rect())
+        paint.translate(self.center)
+        paint.rotate(self.direction)
 
-        paint.setPen(invert(self.color))
+        paint.setPen(self.color.lighter(150))
+        paint.setBrush(self.color.lighter(150))
+        paint.drawEllipse(*self.step_ellipse_params())
+        paint.drawRect(*self.step_rect_params())
+
+        paint.setPen(self.color)
         paint.setBrush(self.color)
-        paint.drawEllipse(self.pos(), *[center_rad] * 2)
+        paint.drawEllipse(*self.draw_params())
+
+    def step_ellipse_params(self):
+        return [
+            self.step - self.radius,
+            -self.radius,
+            2 * self.radius,
+            2 * self.radius
+        ]
+
+    def step_rect_params(self):
+        return [0, -self.radius, self.step, 2 * self.radius]
+
+    def draw_params(self):
+        return [-self.radius, -self.radius, 2 * self.radius, 2 * self.radius]
