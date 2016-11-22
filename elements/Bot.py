@@ -49,9 +49,12 @@ class Bot(Figure):
         self.setGeometry(point.x(), point.y())
 
     def perform_turn(self):
+        self.update()
+        if self.intersects:
+            self.timer.stop()
+            return
         self.direction = (self.direction + self.angle) % 360
         self.turn_number += 1
-        self.update()
 
     def turn(self, angle):
         if angle > 3600:
@@ -88,6 +91,7 @@ class Bot(Figure):
         self.draw_step(paint)
         self.draw_ray(paint)
         self.draw_self(paint)
+        self.draw_dots(paint)
 
     def draw_step(self, paint):
         paint.setPen(self.color.lighter(150))
@@ -112,11 +116,10 @@ class Bot(Figure):
         paint.setPen(QtGui.QPen(self.ray_color, 5))
         paint.drawLine(0, 0, 1000, 0)
 
+    def draw_dots(self, paint):
         paint.rotate(-self.direction)
         paint.translate(-self.center)
         paint.setBrush(self.ray_color.darker())
         paint.setPen(self.ray_color.darker())
         for intersect in self.intersects:
             paint.drawEllipse(intersect, 7, 7)
-        paint.translate(self.center)
-        paint.rotate(self.direction)
