@@ -42,11 +42,14 @@ class Scene(QtGui.QFrame):
         self.start = event.posF()
 
     def mouseReleaseEvent(self, event):
-        self.end = event.posF()
-        line = QtCore.QLineF(self.start, self.end)
-        wall = Wall(line, self, self.wall_color)
-        wall.show()
-        self.walls.append(wall)
+        if event.button() & QtCore.Qt.LeftButton:
+            self.end = event.posF()
+            line = QtCore.QLineF(self.start, self.end)
+            wall = Wall(line, self, self.wall_color)
+            wall.show()
+            self.walls.append(wall)
+        elif event.button() & QtCore.Qt.RightButton:
+            self.bot.destination = event.posF()
         self.bot.update()
 
     def draw_rulers(self):

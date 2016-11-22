@@ -11,6 +11,7 @@ center_rad = 5
 class Bot(Figure):
     def __init__(self, parent=None, **kwargs):
         super(Bot, self).__init__(parent, **kwargs)
+        self.destination = None
         self.intersects = []
         self.direction = 0
         self.turn_number = 0
@@ -87,11 +88,14 @@ class Bot(Figure):
 
         paint.translate(self.center)
         paint.rotate(self.direction)
-
         self.draw_step(paint)
         self.draw_ray(paint)
         self.draw_self(paint)
+
+        paint.rotate(-self.direction)
+        paint.translate(-self.center)
         self.draw_dots(paint)
+        self.draw_aim(paint)
 
     def draw_step(self, paint):
         paint.setPen(self.color.lighter(150))
@@ -117,9 +121,16 @@ class Bot(Figure):
         paint.drawLine(0, 0, 1000, 0)
 
     def draw_dots(self, paint):
-        paint.rotate(-self.direction)
-        paint.translate(-self.center)
-        paint.setBrush(self.ray_color.darker())
-        paint.setPen(self.ray_color.darker())
+        paint.setPen(QtGui.QPen(
+            self.ray_color.darker(), 14,
+            QtCore.Qt.SolidLine, QtCore.Qt.RoundCap
+        ))
         for intersect in self.intersects:
-            paint.drawEllipse(intersect, 7, 7)
+            paint.drawPoint(intersect)
+
+    def draw_aim(self, paint):
+        paint.setPen(QtGui.QPen(
+            self.ray_color.darker(), 14,
+            QtCore.Qt.SolidLine, QtCore.Qt.RoundCap
+        ))
+        paint.drawPoint(self.destination)

@@ -19,7 +19,7 @@ class Logger(logging.Logger):
             )
 
             filehandler = logging.FileHandler(
-                os.path.join(BASE_DIR, u'easy_weeks.log')
+                os.path.join(BASE_DIR, u'aye-aye.log')
             )
             filehandler.setFormatter(formatter)
             filehandler.setLevel(logging.INFO)
