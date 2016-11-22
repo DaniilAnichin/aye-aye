@@ -23,6 +23,19 @@ class MainWindow(QtGui.QMainWindow):
 
         self.controls = ControlsForm()
         self.scene = Scene(color=self.controls.scene_color)
+        self.hbox.addWidget(self.scene)
+        self.hbox.addLayout(self.controls)
+
+        self.setMenuBar(QtGui.QMenuBar(self))
+        self.setStatusBar(QtGui.QStatusBar(self))
+
+        self.retranslateUi()
+        QtCore.QMetaObject.connectSlotsByName(self)
+
+    def retranslateUi(self):
+        self.setWindowTitle(fromUtf8('Окно'))
+
+    def set_bot(self):
         self.scene.create_bot(**self.controls.bot_params())
         self.controls.edited.connect(
             lambda: self.scene.update_bot(**self.controls.bot_params())
@@ -36,23 +49,16 @@ class MainWindow(QtGui.QMainWindow):
         self.controls.move_button.clicked.connect(
             self.scene.bot.perform_step
         )
-        self.hbox.addWidget(self.scene)
-        self.hbox.addLayout(self.controls)
-
-        self.setMenuBar(QtGui.QMenuBar(self))
-        self.setStatusBar(QtGui.QStatusBar(self))
-
-        self.retranslateUi()
-        QtCore.QMetaObject.connectSlotsByName(self)
-
-    def retranslateUi(self):
-        self.setWindowTitle(fromUtf8('Окно'))
+        self.controls.reset_button.clicked.connect(
+            lambda: self.scene.bot.go_home(**self.controls.bot_params())
+        )
 
 
 def main():
     app = QtGui.QApplication(sys.argv)
     window = MainWindow()
     window.show()
+    window.set_bot()
     sys.exit(app.exec_())
 
 

@@ -18,12 +18,11 @@ class Bot(Figure):
         self.block_center = False
         self.update_params(**kwargs)
         self.move(0, 0)
-        logger.debug(self.parent().size())
-        self.resize(self.parent().size())
         self.show()
 
     def update_params(self, **kwargs):
         # logger.debug('Update called')
+        self.setGeometry(self.parent().rect())
         self.radius = 5 * kwargs.get('width')
         self.step = 5 * kwargs.get('step')
         self.color = kwargs.get('color')
@@ -33,6 +32,11 @@ class Bot(Figure):
         if not self.block_center:
             self.center = QtCore.QPointF(5 * kwargs.get('x'), 5 * kwargs.get('y'))
         self.block_center = True
+        self.update()
+
+    def go_home(self, **kwargs):
+        self.block_center = False
+        self.update_params(**kwargs)
 
     def perform_step(self):
         x = self.center.x() + self.step * cos(radians(self.direction))
@@ -50,7 +54,7 @@ class Bot(Figure):
         self.update()
 
     def turn(self, angle):
-        logger.debug('Called')
+        # logger.debug('Called')
         if angle > 3600:
             return
         self.timer = CountingTimer(angle / self.angle, self.time_step, self.perform_turn)
@@ -62,10 +66,6 @@ class Bot(Figure):
         paint = QtGui.QPainter()
         paint.begin(self)
         paint.setRenderHint(QtGui.QPainter.Antialiasing)
-
-        paint.setBrush(QtGui.QColor('white'))
-        logger.debug(event.rect())
-        paint.drawRect(event.rect())
 
         paint.translate(self.center)
         paint.rotate(self.direction)
