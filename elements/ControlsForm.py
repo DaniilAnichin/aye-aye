@@ -22,11 +22,10 @@ class ControlsForm(QtGui.QFormLayout):
 
     def __init__(self, *args):
         super(ControlsForm, self).__init__(*args)
-        # labels = ['width_label', 'angle_label', 'step_label', 'time_label',
         spins = {
             'width_spin': [1, 6],
             'step_spin': [1, 10],
-            'angle_spin': [1, 20],
+            'angle_spin': [-20, 20],
             'time_spin': [1, 10],
             'x_spin': [0, 128],
             'y_spin': [0, 96],
@@ -46,7 +45,13 @@ class ControlsForm(QtGui.QFormLayout):
             self.addRow(label, spin)
 
         color_buttons = ['scene_button', 'bot_button', 'ray_button', 'staff_button']
-        action_buttons = ['move_button', 'turn_button', 'reset_button', 'defaults_button']
+        action_buttons = [
+            'move_button',
+            'turn_button',
+            # 'add_object_button',
+            'reset_button',
+            'defaults_button'
+        ]
         for name in color_buttons + action_buttons:
             button = QtGui.QPushButton()
             button.setStyleSheet(stylesheet % QtGui.QColor('lightGrey').name())
@@ -56,11 +61,6 @@ class ControlsForm(QtGui.QFormLayout):
             getattr(self, name).clicked.connect(
                 partial(self.color_picker, name)
             )
-
-        # self.addRow(self.width_label, self.width_spin)
-        # self.addRow(self.angle_label, self.angle_spin)
-        # self.addRow(self.move_label, self.step_spin)
-        # self.addRow(self.time_label, self.time_spin)
 
         self.addRow(self.scene_button, self.bot_button)
         self.addRow(self.ray_button, self.staff_button)

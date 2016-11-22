@@ -22,7 +22,10 @@ class MainWindow(QtGui.QMainWindow):
         self.hbox = QtGui.QHBoxLayout(self.centralWidget())
 
         self.controls = ControlsForm()
-        self.scene = Scene(color=self.controls.scene_color)
+        self.scene = Scene(
+            color=self.controls.scene_color,
+            staff_color=self.controls.staff_color,
+        )
         self.hbox.addWidget(self.scene)
         self.hbox.addLayout(self.controls)
 
@@ -41,7 +44,10 @@ class MainWindow(QtGui.QMainWindow):
             lambda: self.scene.update_bot(**self.controls.bot_params())
         )
         self.controls.edited.connect(
-            lambda: self.scene.update_color(color=self.controls.scene_color)
+            lambda: self.scene.update_color(
+                color=self.controls.scene_color,
+                staff_color=self.controls.staff_color
+            )
         )
         self.controls.turn_button.clicked.connect(
             lambda: self.scene.bot.turn(angle=360)
@@ -50,7 +56,7 @@ class MainWindow(QtGui.QMainWindow):
             self.scene.bot.perform_step
         )
         self.controls.reset_button.clicked.connect(
-            lambda: self.scene.bot.go_home(**self.controls.bot_params())
+            lambda: self.scene.reset(**self.controls.bot_params())
         )
 
 

@@ -11,7 +11,7 @@ center_rad = 5
 class Bot(Figure):
     def __init__(self, parent=None, **kwargs):
         super(Bot, self).__init__(parent, **kwargs)
-
+        self.intersects = []
         self.direction = 0
         self.turn_number = 0
         self.center = QtCore.QPointF(0, 0)
@@ -21,11 +21,11 @@ class Bot(Figure):
         self.show()
 
     def update_params(self, **kwargs):
-        # logger.debug('Update called')
         self.setGeometry(self.parent().rect())
         self.radius = 5 * kwargs.get('width')
         self.step = 5 * kwargs.get('step')
         self.color = kwargs.get('color')
+        self.ray_color = kwargs.get('ray_color')
         self.angle = kwargs.get('angle')
         self.time_step = kwargs.get('time_step') / 100.
         self.direction = kwargs.get('direction')
@@ -54,15 +54,30 @@ class Bot(Figure):
         self.update()
 
     def turn(self, angle):
-        # logger.debug('Called')
         if angle > 3600:
             return
-        self.timer = CountingTimer(angle / self.angle, self.time_step, self.perform_turn)
+        self.timer = CountingTimer(
+            abs(angle / self.angle), self.time_step, self.perform_turn
+        )
         self.timer.start()
+
+    def update_ray(self):
+        self.ray = QtCore.QLineF(
+            self.center.x(),
+            self.center.y(),
+            self.center.x() + 1000 * cos(radians(self.direction)),
+            self.center.y() + 1000 * sin(radians(self.direction))
+        )
+        self.intersects = []
+        for line in [wall.line for wall in self.parent().walls]:
+            dot = QtCore.QPointF()
+            if self.ray.intersect(line, dot) == QtCore.QLineF.BoundedIntersection:
+                self.intersects.append(dot)
 
     # Drawing starts here
     def paintEvent(self, event):
-        # logger.debug('Bot is drawing')
+        self.update_ray()
+
         paint = QtGui.QPainter()
         paint.begin(self)
         paint.setRenderHint(QtGui.QPainter.Antialiasing)
@@ -70,25 +85,38 @@ class Bot(Figure):
         paint.translate(self.center)
         paint.rotate(self.direction)
 
+        self.draw_step(paint)
+        self.draw_ray(paint)
+        self.draw_self(paint)
+
+    def draw_step(self, paint):
         paint.setPen(self.color.lighter(150))
         paint.setBrush(self.color.lighter(150))
-        paint.drawEllipse(*self.step_ellipse_params())
-        paint.drawRect(*self.step_rect_params())
-
-        paint.setPen(self.color)
-        paint.setBrush(self.color)
-        paint.drawEllipse(*self.draw_params())
-
-    def step_ellipse_params(self):
-        return [
+        paint.drawEllipse(
             self.step - self.radius,
             -self.radius,
             2 * self.radius,
             2 * self.radius
-        ]
+        )
+        paint.drawRect(0, -self.radius, self.step, 2 * self.radius)
 
-    def step_rect_params(self):
-        return [0, -self.radius, self.step, 2 * self.radius]
+    def draw_self(self, paint):
+        paint.setPen(self.color)
+        paint.setBrush(self.color)
+        paint.drawEllipse(
+            -self.radius, -self.radius,
+            2 * self.radius, 2 * self.radius
+        )
 
-    def draw_params(self):
-        return [-self.radius, -self.radius, 2 * self.radius, 2 * self.radius]
+    def draw_ray(self, paint):
+        paint.setPen(QtGui.QPen(self.ray_color, 5))
+        paint.drawLine(0, 0, 1000, 0)
+
+        paint.rotate(-self.direction)
+        paint.translate(-self.center)
+        paint.setBrush(self.ray_color.darker())
+        paint.setPen(self.ray_color.darker())
+        for intersect in self.intersects:
+            paint.drawEllipse(intersect, 7, 7)
+        paint.translate(self.center)
+        paint.rotate(self.direction)
