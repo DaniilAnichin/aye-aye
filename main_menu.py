@@ -6,7 +6,7 @@ from PyQt4 import QtCore, QtGui
 from elements.ControlsForm import ControlsForm
 from elements.Scene import Scene
 from translate import fromUtf8
-from elements.tools import Logger
+from elements.tools import Logger, CountingTimer
 logger = Logger()
 
 
@@ -58,6 +58,12 @@ class MainWindow(QtGui.QMainWindow):
         self.controls.reset_button.clicked.connect(
             lambda: self.scene.reset(**self.controls.bot_params())
         )
+
+    def closeEvent(self, event):
+        bot = self.scene.bot
+        if hasattr(bot, 'timer'):
+            if isinstance(bot.timer, CountingTimer):
+                bot.timer.stop()
 
 
 def main():

@@ -14,7 +14,6 @@ class Bot(Figure):
         self.destination = None
         self.ray = None
         self.step_ray = None
-        self.intersects = []
         self.direction = 0
         self.turn_number = 0
         self.center = QtCore.QPointF(0, 0)
@@ -47,8 +46,8 @@ class Bot(Figure):
         x = self.center.x() + self.step * cos(radians(self.direction))
         y = self.center.y() + self.step * sin(radians(self.direction))
         dest = QtCore.QPointF(x, y)
-        self.ray = QtCore.QLineF(self.center, dest)
-        if self.intersects:
+        self.ray = QtCore.QLineF(self.center, self.destination)
+        if self.intersections():
             self.timer.stop()
             return
         else:
@@ -64,7 +63,7 @@ class Bot(Figure):
 
     def perform_turn(self):
         self.update()
-        if self.intersects:
+        if self.intersections():
             self.timer.stop()
             return
         self.direction = (self.direction + self.angle) % 360
@@ -85,11 +84,14 @@ class Bot(Figure):
             self.center.x() + 1000 * cos(radians(self.direction)),
             self.center.y() + 1000 * sin(radians(self.direction))
         )
-        self.intersects = []
+
+    def intersections(self):
+        intersections = []
         for line in [wall.line for wall in self.parent().walls]:
             dot = QtCore.QPointF()
             if self.ray.intersect(line, dot) == QtCore.QLineF.BoundedIntersection:
-                self.intersects.append(dot)
+                intersections.append(dot)
+        return intersections
 
     # Drawing starts here
     def paintEvent(self, event):
@@ -138,7 +140,7 @@ class Bot(Figure):
             self.ray_color.darker(), 14,
             QtCore.Qt.SolidLine, QtCore.Qt.RoundCap
         ))
-        for intersect in self.intersects:
+        for intersect in self.intersections():
             paint.drawPoint(intersect)
 
     def draw_aim(self, paint):
@@ -148,5 +150,3 @@ class Bot(Figure):
         ))
         if self.destination:
             paint.drawPoint(self.destination)
-
-
