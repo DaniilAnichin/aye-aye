@@ -53,7 +53,7 @@ class MainWindow(QtGui.QMainWindow):
             lambda: self.scene.bot.turn(angle=360)
         )
         self.controls.move_button.clicked.connect(
-            self.scene.bot.perform_step
+            self.scene.bot.move_to_aim
         )
         self.controls.reset_button.clicked.connect(
             lambda: self.scene.reset(**self.controls.bot_params())

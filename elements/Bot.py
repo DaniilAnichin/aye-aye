@@ -12,6 +12,8 @@ class Bot(Figure):
     def __init__(self, parent=None, **kwargs):
         super(Bot, self).__init__(parent, **kwargs)
         self.destination = None
+        self.ray = None
+        self.step_ray = None
         self.intersects = []
         self.direction = 0
         self.turn_number = 0
@@ -40,14 +42,25 @@ class Bot(Figure):
         self.update_params(**kwargs)
 
     def perform_step(self):
+        self.direction = (self.direction + self.angle) % 360
+        self.turn_number += 1
         x = self.center.x() + self.step * cos(radians(self.direction))
         y = self.center.y() + self.step * sin(radians(self.direction))
-        self.center.setX(x)
-        self.center.setY(y)
+        dest = QtCore.QPointF(x, y)
+        self.ray = QtCore.QLineF(self.center, dest)
+        if self.intersects:
+            self.timer.stop()
+            return
+        else:
+            self.center = dest
+
         self.update()
 
-    def move_to(self, point):
-        self.setGeometry(point.x(), point.y())
+    def move_to_aim(self):
+        self.timer = CountingTimer(
+            10 ** 6, self.time_step, self.perform_step
+        )
+        self.timer.start()
 
     def perform_turn(self):
         self.update()
@@ -133,4 +146,7 @@ class Bot(Figure):
             self.ray_color.darker(), 14,
             QtCore.Qt.SolidLine, QtCore.Qt.RoundCap
         ))
-        paint.drawPoint(self.destination)
+        if self.destination:
+            paint.drawPoint(self.destination)
+
+
