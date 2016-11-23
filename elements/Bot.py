@@ -24,15 +24,12 @@ class Bot(Figure):
 
     def update_params(self, **kwargs):
         self.setGeometry(self.parent().rect())
-        self.radius = 5 * kwargs.get('width')
-        self.step = 5 * kwargs.get('step')
-        self.color = kwargs.get('color')
-        self.ray_color = kwargs.get('ray_color')
-        self.angle = kwargs.get('angle')
-        self.time_step = kwargs.get('time_step') / 100.
-        self.direction = kwargs.get('direction')
         if not self.block_center:
             self.center = QtCore.QPointF(5 * kwargs.get('x'), 5 * kwargs.get('y'))
+
+        for key in kwargs.keys():
+            setattr(self, key, kwargs[key])
+
         self.block_center = True
         self.update()
 
@@ -41,21 +38,26 @@ class Bot(Figure):
         self.update_params(**kwargs)
 
     def perform_step(self):
-        self.direction = (self.direction + self.angle) % 360
-        self.turn_number += 1
+        self.ray = QtCore.QLineF(self.center, self.destination)
+        if not self.turn_number:
+            self.turn_number = 1
+            self.direction = self.ray.angle() - 90
+            self.angle = abs(self.angle)
+        if self.turn_number > 360 / self.angle:
+            self.turn_number = 1
+            self.angle = -self.angle
+
+            self.timer.stop()
         x = self.center.x() + self.step * cos(radians(self.direction))
         y = self.center.y() + self.step * sin(radians(self.direction))
         dest = QtCore.QPointF(x, y)
-        self.ray = QtCore.QLineF(self.center, self.destination)
-        if self.intersections():
-            self.timer.stop()
-            return
-        else:
-            self.center = dest
 
+        self.center = dest
+        self.turn_number += 1
         self.update()
 
     def move_to_aim(self):
+        self.turn_number = 0
         self.timer = CountingTimer(
             10 ** 6, self.time_step, self.perform_step
         )
@@ -67,7 +69,6 @@ class Bot(Figure):
             self.timer.stop()
             return
         self.direction = (self.direction + self.angle) % 360
-        self.turn_number += 1
 
     def turn(self, angle):
         if angle > 3600:

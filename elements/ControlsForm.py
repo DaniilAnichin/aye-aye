@@ -25,11 +25,10 @@ class ControlsForm(QtGui.QFormLayout):
         spins = {
             'width_spin': [1, 6],
             'step_spin': [1, 10],
-            'angle_spin': [-20, 20],
+            'angle_spin': [0, 20],
             'time_spin': [1, 10],
             'x_spin': [0, 128],
             'y_spin': [0, 96],
-            'direction_spin': [0, 359],
         }
         spin_names = spins.keys()
         spin_names.sort()
@@ -65,7 +64,7 @@ class ControlsForm(QtGui.QFormLayout):
         self.addRow(self.scene_button, self.bot_button)
         self.addRow(self.ray_button, self.staff_button)
 
-        last_number = 9
+        last_number = 8
         for name in action_buttons:
             self.setWidget(
                 last_number, QtGui.QFormLayout.SpanningRole, getattr(self, name)
@@ -85,7 +84,7 @@ class ControlsForm(QtGui.QFormLayout):
         self.time_label.setText(fromUtf8('Шаг времени'))
         self.x_label.setText(fromUtf8('Координата X'))
         self.y_label.setText(fromUtf8('Координата Y'))
-        self.direction_label.setText(fromUtf8('Направление'))
+        # self.direction_label.setText(fromUtf8('Направление'))
 
         self.scene_button.setText(fromUtf8('Цвет сцены'))
         self.bot_button.setText(fromUtf8('Цвет робота'))
@@ -120,13 +119,13 @@ class ControlsForm(QtGui.QFormLayout):
 
     def bot_params(self):
         kwargs = {
-            'width': self.width_spin.value(),
-            'step': self.step_spin.value(),
+            'width': self.width_spin.value() * 5,
+            'step': self.step_spin.value() * 5,
             'color': self.bot_color,
             'ray_color': self.ray_color,
-            'time_step': self.time_spin.value(),
+            'time_step': self.time_spin.value() / 100.,
             'angle': self.angle_spin.value(),
-            'direction': self.direction_spin.value(),
+            # 'direction': self.direction_spin.value(),
             'x': self.x_spin.value(),
             'y': self.y_spin.value()
         }
@@ -139,7 +138,7 @@ class ControlsForm(QtGui.QFormLayout):
         self.time_spin.setValue(3)
         self.x_spin.setValue(10)
         self.y_spin.setValue(10)
-        self.direction_spin.setValue(0)
+        # self.direction_spin.setValue(0)
 
         self.set_color('scene_button', QtGui.QColor(255, 255, 255))
         self.set_color('bot_button', QtGui.QColor(127, 127, 127))
