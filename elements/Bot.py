@@ -11,9 +11,11 @@ center_rad = 5
 class Bot(Figure):
     def __init__(self, parent=None, **kwargs):
         super(Bot, self).__init__(parent, **kwargs)
+        self.turned = False
+        self.moved = False
+
         self.destination = None
         self.ray = None
-        self.step_ray = None
         self.direction = 0
         self.turn_number = 0
         self.center = QtCore.QPointF(0, 0)
@@ -37,23 +39,37 @@ class Bot(Figure):
         self.block_center = False
         self.update_params(**kwargs)
 
+    def step_dest(self):
+        temp_line = QtCore.QLineF()
+        temp_line.setP1(self.center)
+        temp_line.setAngle(self.direction)
+        temp_line.setLength(self.step)
+        return temp_line.p2()
+
     def perform_step(self):
-        self.ray = QtCore.QLineF(self.center, self.destination)
-        if not self.turn_number:
-            self.turn_number = 1
-            self.direction = self.ray.angle() - 90
-            self.angle = abs(self.angle)
-        if self.turn_number > 360 / self.angle:
-            self.turn_number = 1
-            self.angle = -self.angle
+        temp_ray = QtCore.QLineF(self.center, self.destination)
+        if not self.moved:
+            self.direction = temp_ray.angle()
+            self.moved = True
+        self.ray = QtCore.QLineF(self.center, self.step_dest())
 
+        if temp_ray.length() < self.step:
+            self.moved = False
             self.timer.stop()
-        x = self.center.x() + self.step * cos(radians(self.direction))
-        y = self.center.y() + self.step * sin(radians(self.direction))
-        dest = QtCore.QPointF(x, y)
+            return
 
-        self.center = dest
-        self.turn_number += 1
+        if self.intersections():
+            if not self.turned and abs(self.ray.angle()) > 135:
+                self.turned = True
+                self.angle = -self.angle
+            else:
+                self.direction += self.angle
+        else:
+            self.ray = temp_ray
+            if not self.intersections():
+                self.moved = False
+            self.center = self.ray.p2()
+            self.turn_number += 1
         self.update()
 
     def move_to_aim(self):
@@ -79,12 +95,10 @@ class Bot(Figure):
         self.timer.start()
 
     def update_ray(self):
-        self.ray = QtCore.QLineF(
-            self.center.x(),
-            self.center.y(),
-            self.center.x() + 1000 * cos(radians(self.direction)),
-            self.center.y() + 1000 * sin(radians(self.direction))
-        )
+        self.ray = QtCore.QLineF()
+        self.ray.setP1(self.center)
+        self.ray.setAngle(self.direction)
+        self.ray.setLength(1000)
 
     def intersections(self):
         intersections = []
@@ -94,6 +108,11 @@ class Bot(Figure):
                 intersections.append(dot)
         return intersections
 
+    def nearest(self):
+        lines = [QtCore.QLineF(self.center, intersect) for intersect in self.intersections()]
+        lines.sort(key=lambda a: a.length())
+        return lines[:1]
+
     # Drawing starts here
     def paintEvent(self, event):
         self.update_ray()
@@ -102,39 +121,30 @@ class Bot(Figure):
         paint.begin(self)
         paint.setRenderHint(QtGui.QPainter.Antialiasing)
 
-        paint.translate(self.center)
-        paint.rotate(self.direction)
         self.draw_step(paint)
         self.draw_ray(paint)
         self.draw_self(paint)
-
-        paint.rotate(-self.direction)
-        paint.translate(-self.center)
         self.draw_dots(paint)
         self.draw_aim(paint)
 
     def draw_step(self, paint):
-        paint.setPen(self.color.lighter(150))
+        paint.setPen(QtGui.QPen(
+            self.color.lighter(), self.radius * 2,
+            QtCore.Qt.SolidLine, QtCore.Qt.RoundCap
+        ))
         paint.setBrush(self.color.lighter(150))
-        paint.drawEllipse(
-            self.step - self.radius,
-            -self.radius,
-            2 * self.radius,
-            2 * self.radius
-        )
-        paint.drawRect(0, -self.radius, self.step, 2 * self.radius)
+        paint.drawLine(self.center, self.step_dest())
 
     def draw_self(self, paint):
-        paint.setPen(self.color)
-        paint.setBrush(self.color)
-        paint.drawEllipse(
-            -self.radius, -self.radius,
-            2 * self.radius, 2 * self.radius
-        )
+        paint.setPen(QtGui.QPen(
+            self.color, self.radius * 2,
+            QtCore.Qt.SolidLine, QtCore.Qt.RoundCap
+        ))
+        paint.drawPoint(self.center)
 
     def draw_ray(self, paint):
         paint.setPen(QtGui.QPen(self.ray_color, 5))
-        paint.drawLine(0, 0, 1000, 0)
+        paint.drawLine(self.ray)
 
     def draw_dots(self, paint):
         paint.setPen(QtGui.QPen(

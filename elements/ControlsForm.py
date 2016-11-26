@@ -119,7 +119,7 @@ class ControlsForm(QtGui.QFormLayout):
 
     def bot_params(self):
         kwargs = {
-            'width': self.width_spin.value() * 5,
+            'radius': self.width_spin.value() * 5,
             'step': self.step_spin.value() * 5,
             'color': self.bot_color,
             'ray_color': self.ray_color,
