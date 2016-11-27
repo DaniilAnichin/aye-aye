@@ -80,19 +80,30 @@ class Bot(Figure):
 
     def perform_step(self):
         # Set params if starting algorithm
-        if self.move_number > 100:
+        if self.move_number > 50:
             self.angle = -self.angle
             self.move_number = 0
+
         if self.destination_ray().length() < self.step and \
                 self.suites(self.destination_ray().angle()):
             self.timer.stop()
             return
 
-        if self.moved:
+        if not self.intersections(self.destination_ray()):
+            self.direction = self.destination_ray().angle()
+            self.center = self.step_ray().p2()
+            self.move_number += 1
+            self.update()
+            return
+
+        if self.moved and self.move_number == 0:
+            # if self.moved:
             self.ray = self.destination_ray()
             self.direction = self.ray.angle()
             self.wall_angle = self.ray.angle()
             self.moved = False
+            self.update()
+            return
 
         self.temp_ray = self.step_ray()
         if self.suites(self.temp_ray.angle()):

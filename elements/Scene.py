@@ -13,7 +13,6 @@ class Scene(QtGui.QFrame):
         self.setSizePolicy(QtGui.QSizePolicy(*[QtGui.QSizePolicy.Expanding] * 2))
         self.update_color(**kwargs)
         self.walls = []
-        self.draw_rulers()
 
     def update_color(self, color=None, staff_color=None):
         self.color = color
@@ -22,18 +21,19 @@ class Scene(QtGui.QFrame):
             background-color: %s;
             border: 1px solid #8f8f91;
             ''' % self.color.name()
-        )
+                           )
 
     def create_bot(self, **kwargs):
+        self.draw_rulers()
         self.bot = Bot(self, **kwargs)
 
     def update_bot(self, **kwargs):
         self.bot.update_params(**kwargs)
 
     def reset(self, **kwargs):
-        for wall in self.walls:
-            self.walls.remove(wall)
-            wall.deleteLater()
+        # for wall in self.walls:
+        # self.walls.remove(wall)
+        # wall.deleteLater()
         self.bot.go_home(**kwargs)
         self.update()
 
@@ -53,5 +53,15 @@ class Scene(QtGui.QFrame):
         self.bot.update()
 
     def draw_rulers(self):
-        # TODO draw rulers on the sides of the scene
-        pass
+        dots = [
+            self.rect().bottomLeft(),
+            self.rect().bottomRight(),
+            self.rect().topRight(),
+            self.rect().topLeft()
+        ]
+        for i, dot in enumerate(dots):
+            line = QtCore.QLineF(dot, dots[i - 1])
+            wall = Wall(line, self, self.wall_color)
+            wall.show()
+            self.walls.append(wall)
+            # TODO draw rulers on the sides of the scene
