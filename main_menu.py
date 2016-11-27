@@ -61,9 +61,8 @@ class MainWindow(QtGui.QMainWindow):
 
     def closeEvent(self, event):
         bot = self.scene.bot
-        if hasattr(bot, 'timer'):
-            if isinstance(bot.timer, CountingTimer):
-                bot.timer.stop()
+        if isinstance(bot.timer, CountingTimer):
+            bot.timer.stop()
 
 
 def main():

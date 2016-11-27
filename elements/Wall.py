@@ -5,7 +5,6 @@ from PyQt4 import QtGui, QtCore
 from elements.Figure import Figure
 from elements.tools import Logger, CountingTimer
 logger = Logger()
-center_rad = 5
 
 
 class Wall(Figure):

@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*- #
-from math import cos, sin, degrees, radians
 from PyQt4 import QtGui, QtCore
 from elements.Figure import Figure
 from elements.tools import Logger, CountingTimer
@@ -9,15 +8,32 @@ center_rad = 5
 
 
 class Bot(Figure):
+    # Params list:
+    moved = True
+
+    # move_angle = None
+    last_nearest = None
+
+    wall_size = 2.5
+    wall_angle = None
+    temp_ray = None
+    ray = None
+
+    destination = None
+    center = None
+    direction = 0
+
+    radius = 1
+    step = 1
+    color = None
+    ray_color = None
+    time_step = .01
+    angle = 1
+    timer = None
+    move_number = 0
+
     def __init__(self, parent=None, **kwargs):
         super(Bot, self).__init__(parent, **kwargs)
-        self.turned = False
-        self.moved = False
-
-        self.destination = None
-        self.ray = None
-        self.direction = 0
-        self.turn_number = 0
         self.center = QtCore.QPointF(0, 0)
         self.block_center = False
         self.update_params(**kwargs)
@@ -26,11 +42,9 @@ class Bot(Figure):
 
     def update_params(self, **kwargs):
         self.setGeometry(self.parent().rect())
-        if not self.block_center:
-            self.center = QtCore.QPointF(5 * kwargs.get('x'), 5 * kwargs.get('y'))
-
         for key in kwargs.keys():
-            setattr(self, key, kwargs[key])
+            if not (key == 'center' and self.block_center):
+                setattr(self, key, kwargs[key])
 
         self.block_center = True
         self.update()
@@ -39,41 +53,59 @@ class Bot(Figure):
         self.block_center = False
         self.update_params(**kwargs)
 
-    def step_dest(self):
+    def suites(self, direction):
+        angles = [-90, -45, 0, 45, 90]
+        intersections = []
+        for angle in angles:
+            radial = QtCore.QLineF()
+            radial.setP1(self.center)
+            radial.setAngle(direction + angle)
+            radial.setLength(self.radius)
+            guide = QtCore.QLineF()
+            guide.setP1(radial.p2())
+            guide.setAngle(direction)
+            guide.setLength(self.step)
+            intersections += self.intersections(guide)
+        return True if not intersections else False
+
+    def step_ray(self):
         temp_line = QtCore.QLineF()
         temp_line.setP1(self.center)
         temp_line.setAngle(self.direction)
         temp_line.setLength(self.step)
-        return temp_line.p2()
+        return temp_line
+
+    def destination_ray(self):
+        return QtCore.QLineF(self.center, self.destination)
 
     def perform_step(self):
-        temp_ray = QtCore.QLineF(self.center, self.destination)
-        if not self.moved:
-            self.direction = temp_ray.angle()
-            self.moved = True
-        self.ray = QtCore.QLineF(self.center, self.step_dest())
-
-        if temp_ray.length() < self.step:
-            self.moved = False
+        # Set params if starting algorithm
+        if self.move_number > 100:
+            self.angle = -self.angle
+            self.move_number = 0
+        if self.destination_ray().length() < self.step and \
+                self.suites(self.destination_ray().angle()):
             self.timer.stop()
             return
 
-        if self.intersections():
-            if not self.turned and abs(self.ray.angle()) > 135:
-                self.turned = True
-                self.angle = -self.angle
-            else:
-                self.direction += self.angle
+        if self.moved:
+            self.ray = self.destination_ray()
+            self.direction = self.ray.angle()
+            self.wall_angle = self.ray.angle()
+            self.moved = False
+
+        self.temp_ray = self.step_ray()
+        if self.suites(self.temp_ray.angle()):
+            self.center = self.temp_ray.p2()
+            self.move_number += 1
+            self.moved = True
         else:
-            self.ray = temp_ray
-            if not self.intersections():
-                self.moved = False
-            self.center = self.ray.p2()
-            self.turn_number += 1
+            self.direction += self.angle
+
         self.update()
 
     def move_to_aim(self):
-        self.turn_number = 0
+        self.move_number = 0
         self.timer = CountingTimer(
             10 ** 6, self.time_step, self.perform_step
         )
@@ -81,7 +113,7 @@ class Bot(Figure):
 
     def perform_turn(self):
         self.update()
-        if self.intersections():
+        if self.intersections(self.ray):
             self.timer.stop()
             return
         self.direction = (self.direction + self.angle) % 360
@@ -100,18 +132,23 @@ class Bot(Figure):
         self.ray.setAngle(self.direction)
         self.ray.setLength(1000)
 
-    def intersections(self):
+    def intersections(self, ray):
         intersections = []
         for line in [wall.line for wall in self.parent().walls]:
             dot = QtCore.QPointF()
-            if self.ray.intersect(line, dot) == QtCore.QLineF.BoundedIntersection:
+            if ray.intersect(line, dot) == QtCore.QLineF.BoundedIntersection:
                 intersections.append(dot)
         return intersections
 
-    def nearest(self):
-        lines = [QtCore.QLineF(self.center, intersect) for intersect in self.intersections()]
+    def nearest(self, ray):
+        lines = [
+            QtCore.QLineF(self.center, intersect)
+            for intersect in self.intersections(ray)
+        ]
+        if not lines:
+            return None
         lines.sort(key=lambda a: a.length())
-        return lines[:1]
+        return lines[0]
 
     # Drawing starts here
     def paintEvent(self, event):
@@ -133,7 +170,7 @@ class Bot(Figure):
             QtCore.Qt.SolidLine, QtCore.Qt.RoundCap
         ))
         paint.setBrush(self.color.lighter(150))
-        paint.drawLine(self.center, self.step_dest())
+        paint.drawLine(self.step_ray())
 
     def draw_self(self, paint):
         paint.setPen(QtGui.QPen(
@@ -151,7 +188,7 @@ class Bot(Figure):
             self.ray_color.darker(), 14,
             QtCore.Qt.SolidLine, QtCore.Qt.RoundCap
         ))
-        for intersect in self.intersections():
+        for intersect in self.intersections(self.ray):
             paint.drawPoint(intersect)
 
     def draw_aim(self, paint):

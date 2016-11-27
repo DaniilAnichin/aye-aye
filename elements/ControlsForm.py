@@ -126,8 +126,10 @@ class ControlsForm(QtGui.QFormLayout):
             'time_step': self.time_spin.value() / 100.,
             'angle': self.angle_spin.value(),
             # 'direction': self.direction_spin.value(),
-            'x': self.x_spin.value(),
-            'y': self.y_spin.value()
+            'center': QtCore.QPointF(
+                5 * self.x_spin.value(),
+                5 * self.y_spin.value()
+            )
         }
         return kwargs
 
