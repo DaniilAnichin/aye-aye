@@ -30,7 +30,7 @@ class Bot(Figure):
     time_step = .01
     angle = 1
     timer = None
-    move_number = 0
+    turn_number = 0
 
     def __init__(self, parent=None, **kwargs):
         super(Bot, self).__init__(parent, **kwargs)
@@ -53,18 +53,18 @@ class Bot(Figure):
         self.block_center = False
         self.update_params(**kwargs)
 
-    def suites(self, direction):
+    def suites(self, direction_ray):
         angles = [-90, -45, 0, 45, 90]
         intersections = []
         for angle in angles:
             radial = QtCore.QLineF()
             radial.setP1(self.center)
-            radial.setAngle(direction + angle)
+            radial.setAngle(direction_ray.angle() + angle)
             radial.setLength(self.radius)
             guide = QtCore.QLineF()
             guide.setP1(radial.p2())
-            guide.setAngle(direction)
-            guide.setLength(self.step)
+            guide.setAngle(direction_ray.angle())
+            guide.setLength(direction_ray.length())
             intersections += self.intersections(guide)
         return True if not intersections else False
 
@@ -80,25 +80,26 @@ class Bot(Figure):
 
     def perform_step(self):
         # Set params if starting algorithm
-        if self.move_number > 50:
+        if self.turn_number > 100:
             self.angle = -self.angle
-            self.move_number = 0
+            self.turn_number = 0
 
         if self.destination_ray().length() < self.step and \
-                self.suites(self.destination_ray().angle()):
+                self.suites(self.destination_ray()):
             self.timer.stop()
             return
 
-        if not self.intersections(self.destination_ray()):
+        if self.suites(self.destination_ray()):
             self.direction = self.destination_ray().angle()
             self.center = self.step_ray().p2()
-            self.move_number += 1
+            self.turn_number = 0
+            self.moved = True
             self.update()
             return
 
-        if self.moved and self.move_number == 0:
-            # if self.moved:
+        if self.moved and self.turn_number == 0:
             self.ray = self.destination_ray()
+            self.turn_number += 1
             self.direction = self.ray.angle()
             self.wall_angle = self.ray.angle()
             self.moved = False
@@ -106,17 +107,18 @@ class Bot(Figure):
             return
 
         self.temp_ray = self.step_ray()
-        if self.suites(self.temp_ray.angle()):
+        if self.suites(self.temp_ray):
             self.center = self.temp_ray.p2()
-            self.move_number += 1
             self.moved = True
+            self.turn_number = 0
         else:
+            self.turn_number += 1
             self.direction += self.angle
 
         self.update()
 
     def move_to_aim(self):
-        self.move_number = 0
+        self.turn_number = 0
         self.timer = CountingTimer(
             10 ** 6, self.time_step, self.perform_step
         )
@@ -191,7 +193,10 @@ class Bot(Figure):
         paint.drawPoint(self.center)
 
     def draw_ray(self, paint):
-        paint.setPen(QtGui.QPen(self.ray_color, 5))
+        paint.setPen(QtGui.QPen(
+            self.ray_color, 5,
+            QtCore.Qt.SolidLine, QtCore.Qt.RoundCap
+        ))
         paint.drawLine(self.ray)
 
     def draw_dots(self, paint):
@@ -199,8 +204,8 @@ class Bot(Figure):
             self.ray_color.darker(), 14,
             QtCore.Qt.SolidLine, QtCore.Qt.RoundCap
         ))
-        for intersect in self.intersections(self.ray):
-            paint.drawPoint(intersect)
+        if self.nearest(self.ray):
+            paint.drawPoint(self.nearest(self.ray).p2())
 
     def draw_aim(self, paint):
         paint.setPen(QtGui.QPen(

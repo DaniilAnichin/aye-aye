@@ -19,6 +19,8 @@ class Wall(Figure):
         paint = QtGui.QPainter()
         paint.begin(self)
         paint.setRenderHint(QtGui.QPainter.Antialiasing)
-
-        paint.setPen(QtGui.QPen(self.color, 5))
+        paint.setPen(QtGui.QPen(
+            self.color, 5,
+            QtCore.Qt.SolidLine, QtCore.Qt.RoundCap
+        ))
         paint.drawLine(self.line)
