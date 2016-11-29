@@ -134,9 +134,9 @@ class ControlsForm(QtGui.QFormLayout):
         return kwargs
 
     def set_defaults(self):
-        self.width_spin.setValue(2)
+        self.width_spin.setValue(1)
         self.angle_spin.setValue(3)
-        self.step_spin.setValue(7)
+        self.step_spin.setValue(3)
         self.time_spin.setValue(3)
         self.x_spin.setValue(10)
         self.y_spin.setValue(10)

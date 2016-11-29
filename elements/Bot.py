@@ -10,6 +10,7 @@ center_rad = 5
 class Bot(Figure):
     # Params list:
     moved = True
+    turned = False
 
     # move_angle = None
     last_nearest = None
@@ -53,18 +54,18 @@ class Bot(Figure):
         self.block_center = False
         self.update_params(**kwargs)
 
-    def suites(self, direction):
+    def suites(self, direction_ray):
         angles = [-90, -45, 0, 45, 90]
         intersections = []
         for angle in angles:
             radial = QtCore.QLineF()
             radial.setP1(self.center)
-            radial.setAngle(direction + angle)
+            radial.setAngle(direction_ray.angle() + angle)
             radial.setLength(self.radius)
             guide = QtCore.QLineF()
             guide.setP1(radial.p2())
-            guide.setAngle(direction)
-            guide.setLength(self.step)
+            guide.setAngle(direction_ray.angle())
+            guide.setLength(direction_ray.length())
             intersections += self.intersections(guide)
         return True if not intersections else False
 
@@ -80,38 +81,48 @@ class Bot(Figure):
 
     def perform_step(self):
         # Set params if starting algorithm
-        if self.move_number > 50:
-            self.angle = -self.angle
-            self.move_number = 0
+        # if self.move_number > 50:
+        #     self.angle = -self.angle
+        #     self.move_number = 0
 
-        if self.destination_ray().length() < self.step and \
-                self.suites(self.destination_ray().angle()):
-            self.timer.stop()
-            return
-
-        if not self.intersections(self.destination_ray()):
+        if self.suites(self.destination_ray()):
+            if self.destination_ray().length() < self.step:
+                self.timer.stop()
+                self.wall_angle = None
+                return
             self.direction = self.destination_ray().angle()
             self.center = self.step_ray().p2()
             self.move_number += 1
             self.update()
             return
 
-        if self.moved and self.move_number == 0:
+        if not self.wall_angle:
             # if self.moved:
-            self.ray = self.destination_ray()
-            self.direction = self.ray.angle()
-            self.wall_angle = self.ray.angle()
-            self.moved = False
+            self.direction = self.destination_ray().angle()
+            self.temp_ray = self.step_ray()
+            if self.suites(self.temp_ray):
+                self.center = self.step_ray().p2()
+                self.moved = True
+            else:
+                self.wall_angle = self.direction
             self.update()
             return
 
         self.temp_ray = self.step_ray()
-        if self.suites(self.temp_ray.angle()):
-            self.center = self.temp_ray.p2()
-            self.move_number += 1
-            self.moved = True
+        if self.turned:
+            if self.suites(self.temp_ray):
+                self.center = self.temp_ray.p2()
+                self.move_number += 1
+                self.turned = False
+                self.moved = True
+            else:
+                self.direction -= self.angle
         else:
-            self.direction += self.angle
+            if self.suites(self.temp_ray):
+                self.direction += self.angle
+            else:
+                self.turned = True
+                self.direction -= self.angle
 
         self.update()
 
