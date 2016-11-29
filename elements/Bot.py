@@ -10,6 +10,7 @@ center_rad = 5
 class Bot(Figure):
     # Params list:
     moved = True
+    turned = False
 
     # move_angle = None
     last_nearest = None
@@ -84,36 +85,48 @@ class Bot(Figure):
             self.angle = -self.angle
             self.turn_number = 0
 
-        if self.destination_ray().length() < self.step and \
-                self.suites(self.destination_ray()):
-            self.timer.stop()
-            return
-
         if self.suites(self.destination_ray()):
+            if self.destination_ray().length() < self.step:
+                self.timer.stop()
             self.direction = self.destination_ray().angle()
             self.center = self.step_ray().p2()
             self.turn_number = 0
+            self.turned = False
             self.moved = True
             self.update()
             return
 
-        if self.moved and self.turn_number == 0:
+        if self.moved:
             self.ray = self.destination_ray()
             self.turn_number += 1
             self.direction = self.ray.angle()
-            self.wall_angle = self.ray.angle()
             self.moved = False
             self.update()
             return
 
         self.temp_ray = self.step_ray()
-        if self.suites(self.temp_ray):
+        self.update_ray()
+        suites = self.suites(self.ray)
+        nearest = self.nearest(self.ray)
+        if suites and not nearest:
             self.center = self.temp_ray.p2()
             self.moved = True
-            self.turn_number = 0
-        else:
-            self.turn_number += 1
+            self.turned = False
+            self.update()
+            return
+
+        if self.turned:
             self.direction += self.angle
+        else:
+            self.direction = self.destination_ray().angle()
+            self.turned = True
+        # if self.suites(self.temp_ray):
+        #     self.center = self.temp_ray.p2()
+        #     self.moved = True
+        #     self.turn_number = 0
+        # else:
+        #     self.turn_number += 1
+        #     self.direction += self.angle
 
         self.update()
 
