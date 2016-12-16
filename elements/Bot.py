@@ -214,9 +214,10 @@ class Bot(Figure):
             paint.drawPoint(intersect)
 
     def draw_aim(self, paint):
-        paint.setPen(QtGui.QPen(
-            self.ray_color.darker(), 14,
-            QtCore.Qt.SolidLine, QtCore.Qt.RoundCap
-        ))
-        if self.destination:
-            paint.drawPoint(self.destination)
+        pass
+        # paint.setPen(QtGui.QPen(
+        #     self.ray_color.darker(), 14,
+        #     QtCore.Qt.SolidLine, QtCore.Qt.RoundCap
+        # ))
+        # if self.destination:
+        #     paint.drawPoint(self.destination)
