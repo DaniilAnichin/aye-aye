@@ -49,7 +49,8 @@ class ControlsForm(QtGui.QFormLayout):
             'turn_button',
             # 'add_object_button',
             'reset_button',
-            'defaults_button'
+            'defaults_button',
+            'info_button'
         ]
         for name in color_buttons + action_buttons:
             button = QtGui.QPushButton()
@@ -95,6 +96,7 @@ class ControlsForm(QtGui.QFormLayout):
         self.turn_button.setText(fromUtf8('Поворачиваться'))
         self.reset_button.setText(fromUtf8('Сброс сцены'))
         self.defaults_button.setText(fromUtf8('Сброс параметров'))
+        self.info_button.setText(fromUtf8('Результаты'))
 
     def colors(self):
         colors = {
@@ -138,8 +140,8 @@ class ControlsForm(QtGui.QFormLayout):
         self.angle_spin.setValue(3)
         self.step_spin.setValue(3)
         self.time_spin.setValue(3)
-        self.x_spin.setValue(10)
-        self.y_spin.setValue(10)
+        self.x_spin.setValue(50)
+        self.y_spin.setValue(50)
         # self.direction_spin.setValue(0)
 
         self.set_color('scene_button', QtGui.QColor(255, 255, 255))

@@ -24,7 +24,7 @@ class Scene(QtGui.QFrame):
                            )
 
     def create_bot(self, **kwargs):
-        self.draw_rulers()
+        # self.draw_rulers()
         self.bot = Bot(self, **kwargs)
 
     def update_bot(self, **kwargs):

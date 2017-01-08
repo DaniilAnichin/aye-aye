@@ -33,6 +33,9 @@ class Bot(Figure):
     timer = None
     move_number = 0
 
+    started = False
+    remember = []
+
     def __init__(self, parent=None, **kwargs):
         super(Bot, self).__init__(parent, **kwargs)
         self.center = QtCore.QPointF(0, 0)
@@ -80,10 +83,10 @@ class Bot(Figure):
         return QtCore.QLineF(self.center, self.destination)
 
     def perform_step(self):
-        # Set params if starting algorithm
-        # if self.move_number > 50:
-        #     self.angle = -self.angle
-        #     self.move_number = 0
+        if self.circled():
+            self.timer.stop()
+            self.wall_angle = None
+            return
 
         if self.suites(self.destination_ray()):
             if self.destination_ray().length() < self.step:
@@ -113,6 +116,7 @@ class Bot(Figure):
             if self.suites(self.temp_ray):
                 self.center = self.temp_ray.p2()
                 self.move_number += 1
+                self.remember.append(self.center)
                 self.turned = False
                 self.moved = True
             else:
@@ -147,6 +151,14 @@ class Bot(Figure):
             abs(angle / self.angle), self.time_step, self.perform_turn
         )
         self.timer.start()
+
+    def circled(self):
+        if len(self.remember) < 20:
+            return False
+        line1 = QtCore.QLineF(self.remember[-1], self.remember[0])
+        line2 = QtCore.QLineF(self.remember[-2], self.remember[0])
+        line3 = QtCore.QLineF(self.remember[-1], self.remember[-2])
+        return line1.length() + line2.length() < line3.length() * 1.5
 
     def update_ray(self):
         self.ray = QtCore.QLineF()
@@ -184,7 +196,7 @@ class Bot(Figure):
         self.draw_ray(paint)
         self.draw_self(paint)
         self.draw_dots(paint)
-        self.draw_aim(paint)
+        # self.draw_aim(paint)
 
     def draw_step(self, paint):
         paint.setPen(QtGui.QPen(
@@ -210,7 +222,7 @@ class Bot(Figure):
             self.ray_color.darker(), 14,
             QtCore.Qt.SolidLine, QtCore.Qt.RoundCap
         ))
-        for intersect in self.intersections(self.ray):
+        for intersect in self.remember:
             paint.drawPoint(intersect)
 
     def draw_aim(self, paint):
